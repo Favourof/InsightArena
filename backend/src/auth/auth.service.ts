@@ -19,14 +19,16 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-  ) { }
+  ) {}
 
   generateChallenge(stellar_address: string): string {
     const timestamp = Date.now();
     const random = randomBytes(16).toString('hex');
     const challenge = `InsightArena:nonce:${timestamp}:${random}:${stellar_address}`;
 
-    this.logger.debug(`Generating challenge for ${stellar_address}: ${challenge}`);
+    this.logger.debug(
+      `Generating challenge for ${stellar_address}: ${challenge}`,
+    );
 
     this.challengeCache.set(challenge, {
       expiresAt: timestamp + this.TTL_MS,

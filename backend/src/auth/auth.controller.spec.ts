@@ -6,9 +6,11 @@ import { AuthService } from './auth.service';
 import { VerifyChallengeDto } from './dto/verify-challenge.dto';
 
 const mockAuthService = () => ({
-  generateChallenge: jest.fn().mockImplementation((address: string) =>
-    `InsightArena:nonce:1234567890:randomhex:${address}`,
-  ),
+  generateChallenge: jest
+    .fn()
+    .mockImplementation(
+      (address: string) => `InsightArena:nonce:1234567890:randomhex:${address}`,
+    ),
   verifyChallenge: jest.fn(),
 });
 
@@ -41,7 +43,10 @@ describe('AuthController', () => {
     };
 
     it('returns { access_token, user } on valid input', async () => {
-      const user = Object.assign(new User(), { id: 'uuid-1', stellar_address: dto.stellar_address });
+      const user = Object.assign(new User(), {
+        id: 'uuid-1',
+        stellar_address: dto.stellar_address,
+      });
       authService.verifyChallenge.mockResolvedValue({
         access_token: 'signed.jwt.token',
         user,
@@ -57,7 +62,9 @@ describe('AuthController', () => {
     });
 
     it('propagates UnauthorizedException from the service (invalid signature)', async () => {
-      authService.verifyChallenge.mockRejectedValue(new UnauthorizedException('Invalid signature'));
+      authService.verifyChallenge.mockRejectedValue(
+        new UnauthorizedException('Invalid signature'),
+      );
 
       await expect(controller.verifyChallenge(dto)).rejects.toThrow(
         UnauthorizedException,
@@ -66,7 +73,9 @@ describe('AuthController', () => {
 
     it('propagates UnauthorizedException from the service (expired nonce)', async () => {
       authService.verifyChallenge.mockRejectedValue(
-        new UnauthorizedException('No valid challenge found or challenge expired'),
+        new UnauthorizedException(
+          'No valid challenge found or challenge expired',
+        ),
       );
 
       await expect(controller.verifyChallenge(dto)).rejects.toThrow(

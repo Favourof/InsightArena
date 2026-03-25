@@ -5,7 +5,7 @@ import { VerifyChallengeDto } from './dto/verify-challenge.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('challenge')
   @HttpCode(HttpStatus.OK)

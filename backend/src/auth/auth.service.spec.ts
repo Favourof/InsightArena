@@ -13,19 +13,25 @@ const sign = (keypair: Keypair, challenge: string): string =>
   keypair.sign(Buffer.from(challenge, 'utf-8')).toString('hex');
 
 const mockJwtService = () =>
-  ({ signAsync: jest.fn().mockResolvedValue('signed.jwt.token') }) as unknown as JwtService;
+  ({
+    signAsync: jest.fn().mockResolvedValue('signed.jwt.token'),
+  }) as unknown as JwtService;
 
 const mockUsersRepository = () =>
   ({
     findOneBy: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
-  }) as unknown as jest.Mocked<Pick<Repository<User>, 'findOneBy' | 'create' | 'save'>>;
+  }) as unknown as jest.Mocked<
+    Pick<Repository<User>, 'findOneBy' | 'create' | 'save'>
+  >;
 
 describe('AuthService', () => {
   let service: AuthService;
   let jwtService: jest.Mocked<JwtService>;
-  let usersRepository: jest.Mocked<Pick<Repository<User>, 'findOneBy' | 'create' | 'save'>>;
+  let usersRepository: jest.Mocked<
+    Pick<Repository<User>, 'findOneBy' | 'create' | 'save'>
+  >;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -77,28 +83,36 @@ describe('AuthService', () => {
       const kp = makeKeypair();
       const challenge = 'InsightArena:nonce:1234:abcd:' + kp.publicKey();
       const sig = sign(kp, challenge);
-      expect(service.verifyStellarSignature(kp.publicKey(), challenge, sig)).toBe(true);
+      expect(
+        service.verifyStellarSignature(kp.publicKey(), challenge, sig),
+      ).toBe(true);
     });
 
     it('returns false when the signature is tampered', () => {
       const kp = makeKeypair();
       const challenge = 'InsightArena:nonce:1234:abcd:' + kp.publicKey();
       const badSig = 'deadbeef'.repeat(16); // 64-byte garbage
-      expect(service.verifyStellarSignature(kp.publicKey(), challenge, badSig)).toBe(false);
+      expect(
+        service.verifyStellarSignature(kp.publicKey(), challenge, badSig),
+      ).toBe(false);
     });
 
     it('returns false for an invalid public key', () => {
       const kp = makeKeypair();
       const challenge = 'InsightArena:nonce:1234:abcd:' + kp.publicKey();
       const sig = sign(kp, challenge);
-      expect(service.verifyStellarSignature('NOT_A_VALID_KEY', challenge, sig)).toBe(false);
+      expect(
+        service.verifyStellarSignature('NOT_A_VALID_KEY', challenge, sig),
+      ).toBe(false);
     });
 
     it('returns false when the signed payload does not match the challenge', () => {
       const kp = makeKeypair();
       const challenge = 'InsightArena:nonce:1234:abcd:' + kp.publicKey();
       const sig = sign(kp, 'different message');
-      expect(service.verifyStellarSignature(kp.publicKey(), challenge, sig)).toBe(false);
+      expect(
+        service.verifyStellarSignature(kp.publicKey(), challenge, sig),
+      ).toBe(false);
     });
   });
 
@@ -111,14 +125,20 @@ describe('AuthService', () => {
       const challenge = service.generateChallenge(address);
       const sig = sign(kp, challenge);
 
-      const savedUser = Object.assign(new User(), { id: 'uuid-1', stellar_address: address });
+      const savedUser = Object.assign(new User(), {
+        id: 'uuid-1',
+        stellar_address: address,
+      });
       usersRepository.findOneBy = jest.fn().mockResolvedValue(null);
       usersRepository.create = jest.fn().mockReturnValue(savedUser);
       usersRepository.save = jest.fn().mockResolvedValue(savedUser);
 
       const result = await service.verifyChallenge(address, sig);
 
-      expect(result).toEqual({ access_token: 'signed.jwt.token', user: savedUser });
+      expect(result).toEqual({
+        access_token: 'signed.jwt.token',
+        user: savedUser,
+      });
     });
 
     it('signs the JWT with sub: user.id and stellar_address', async () => {
@@ -127,13 +147,17 @@ describe('AuthService', () => {
       const challenge = service.generateChallenge(address);
       const sig = sign(kp, challenge);
 
-      const savedUser = Object.assign(new User(), { id: 'user-uuid', stellar_address: address });
+      const savedUser = Object.assign(new User(), {
+        id: 'user-uuid',
+        stellar_address: address,
+      });
       usersRepository.findOneBy = jest.fn().mockResolvedValue(null);
       usersRepository.create = jest.fn().mockReturnValue(savedUser);
       usersRepository.save = jest.fn().mockResolvedValue(savedUser);
 
       await service.verifyChallenge(address, sig);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jwtService.signAsync).toHaveBeenCalledWith({
         sub: 'user-uuid',
         stellar_address: address,
@@ -146,7 +170,10 @@ describe('AuthService', () => {
       const challenge = service.generateChallenge(address);
       const sig = sign(kp, challenge);
 
-      const existingUser = Object.assign(new User(), { id: 'existing-uuid', stellar_address: address });
+      const existingUser = Object.assign(new User(), {
+        id: 'existing-uuid',
+        stellar_address: address,
+      });
       usersRepository.findOneBy = jest.fn().mockResolvedValue(existingUser);
       usersRepository.save = jest.fn().mockResolvedValue(existingUser);
 
@@ -162,7 +189,10 @@ describe('AuthService', () => {
       const challenge = service.generateChallenge(address);
       const sig = sign(kp, challenge);
 
-      const savedUser = Object.assign(new User(), { id: 'uuid-x', stellar_address: address });
+      const savedUser = Object.assign(new User(), {
+        id: 'uuid-x',
+        stellar_address: address,
+      });
       usersRepository.findOneBy = jest.fn().mockResolvedValue(null);
       usersRepository.create = jest.fn().mockReturnValue(savedUser);
       usersRepository.save = jest.fn().mockResolvedValue(savedUser);
@@ -205,9 +235,9 @@ describe('AuthService', () => {
       const address = kp.publicKey();
       service.generateChallenge(address);
 
-      await expect(
-        service.verifyChallenge(address, 'badsig'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.verifyChallenge(address, 'badsig')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws 401 when the same nonce is submitted a second time (replay attack)', async () => {
@@ -216,7 +246,10 @@ describe('AuthService', () => {
       const challenge = service.generateChallenge(address);
       const sig = sign(kp, challenge);
 
-      const savedUser = Object.assign(new User(), { id: 'u1', stellar_address: address });
+      const savedUser = Object.assign(new User(), {
+        id: 'u1',
+        stellar_address: address,
+      });
       usersRepository.findOneBy = jest.fn().mockResolvedValue(null);
       usersRepository.create = jest.fn().mockReturnValue(savedUser);
       usersRepository.save = jest.fn().mockResolvedValue(savedUser);
